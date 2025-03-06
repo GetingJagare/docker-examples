@@ -1,0 +1,17 @@
+FROM node:22.7
+
+USER node
+
+WORKDIR /var/www/app
+
+RUN chown node:node /var/www/app
+
+COPY --chown=node:node back/package.json .
+RUN npm install mime@3.0.0 --loglevel verbose
+RUN npm install --loglevel verbose
+
+COPY --chown=node:node back/ .
+
+EXPOSE 8080
+
+CMD ["npm", "run", "start:debug"]

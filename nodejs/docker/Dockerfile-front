@@ -1,0 +1,14 @@
+FROM node:22.7
+
+WORKDIR /var/www/app
+
+COPY front/package.json .
+RUN npm install mime@3.0.0 --loglevel verbose
+RUN npm install --loglevel verbose
+RUN npm install socket.io-client@2.0.1 --loglevel verbose
+
+COPY front/ .
+
+EXPOSE 8081
+
+CMD ["npm", "run", "start"]

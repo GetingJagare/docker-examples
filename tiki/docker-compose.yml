@@ -1,0 +1,60 @@
+version: '2'
+# Services
+services:
+  # PHP Service
+  ontoloo_php:
+    container_name: ontoloo_php
+    image: ontoloo:latest
+    build:
+      dockerfile: php/Dockerfile
+    volumes:
+      - ../app:/var/www/ontoloo/:rw
+      - ../fgal:/var/www/fgal/:rw
+    depends_on:
+      - ontoloo_mysql
+
+  # Nginx Service
+  ontoloo_nginx:
+    container_name: ontoloo_nginx
+    build:
+      dockerfile: nginx/Dockerfile
+    ports:
+      - '80:80'
+      - '443:443'
+    restart: always
+    links:
+      - 'ontoloo_php:php'
+    volumes:
+      - ../app:/var/www/ontoloo/:rw
+      - ./nginx:/etc/nginx/conf.d/:ro
+      - ./certs:/etc/nginx/certs/:ro
+    depends_on:
+      - ontoloo_php
+
+  # MariaDB Service
+  ontoloo_mysql:
+    container_name: ontoloo_mysql
+    image: mariadb:10.3
+    ports:
+      - '3306:3306'
+    env_file:
+      - .env
+    volumes:
+      - ontoloo_mysql_data:/var/lib/mysql
+      - ./mysql/my-custom.cnf:/etc/mysql/conf.d/custom.cnf
+      - ./mysql/db:/docker-entrypoint-initdb.d
+
+  # phpMyAdmin Service
+  ontoloo_pma:
+    container_name: ontoloo_pma
+    image: phpmyadmin:5.2.1
+    ports:
+      - '8080:80'
+    environment:
+      PMA_HOST: ontoloo_mysql
+    depends_on:
+      - ontoloo_mysql
+
+# Volumes
+volumes:
+  ontoloo_mysql_data:

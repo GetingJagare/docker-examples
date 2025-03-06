@@ -1,0 +1,63 @@
+version: '3.2'
+services:
+  snabeks_back:
+    container_name: snabeks_back
+    image: snabeks-back:latest
+    user: 1000:1000
+    build:
+      dockerfile: docker/Dockerfile-back
+    volumes:
+      - ./back:/var/www/app/:rw
+      - back_node_modules:/var/www/app/node_modules/
+    ports:
+      - '8080:8080'
+      - '9229:9229'
+    networks:
+      - snabeks_network
+    depends_on:
+      - snabeks_mysql
+  snabeks_front:
+    container_name: snabeks_front
+    image: snabeks-front:latest
+    build:
+      dockerfile: docker/Dockerfile-front
+    volumes:
+      - ./front:/var/www/app/:rw
+      - front_node_modules:/var/www/app/node_modules/
+    ports:
+      - '8081:8081'
+    networks:
+      - snabeks_network
+    depends_on:
+      - snabeks_back 
+  snabeks_mysql:
+    container_name: snabeks_mysql
+    image: mariadb:10.8.4
+    ports:
+      - '3306:3306'
+    env_file:
+      - .env
+    volumes:
+      - snabeks_mysql_data:/var/lib/mysql
+      - ./docker/db:/docker-entrypoint-initdb.d
+    networks:
+      - snabeks_network
+  pma:
+    container_name: snabeks_pma
+    image: phpmyadmin:5.2.1
+    ports:
+      - '8082:80'
+    environment:
+      PMA_HOST: snabeks_mysql
+      UPLOAD_LIMIT: 1024M
+    depends_on:
+      - snabeks_mysql
+    networks:
+      - snabeks_network    
+
+volumes:
+  snabeks_mysql_data:
+  back_node_modules:
+  front_node_modules:
+networks:
+  snabeks_network:
