@@ -1,0 +1,60 @@
+version: '3.2'
+services:
+  auralift_back:
+    container_name: auralift_back
+    image: auralift-back:latest
+    build:
+      dockerfile: docker/Dockerfile-back
+    volumes:
+      - ./back:/var/www/app/:rw
+      - ./docker/apache:/etc/apache2/sites-enabled/:ro
+      - ./docker/logs:/var/log/apache2/
+    ports:
+      - '80:80'
+    networks:
+      - auralift_network
+    depends_on:
+      - auralift_mysql
+  auralift_front:
+    container_name: auralift_front
+    image: auralift-front:latest
+    build:
+      dockerfile: docker/Dockerfile-front
+    volumes:
+      - ./front:/var/www/app/:rw
+      - auralift_node_modules:/var/www/app/node_modules/:rw
+    ports:
+      - '3000:3000'
+      - '3001:3001'
+    networks:
+      - auralift_network
+  auralift_mysql:
+    container_name: auralift_mysql
+    image: mysql:8.4.3
+    ports:
+      - '3306:3306'
+    env_file:
+      - back/.env
+    volumes:
+      - auralift_mysql_data:/var/lib/mysql
+      - ./docker/db:/docker-entrypoint-initdb.d
+    networks:
+      - auralift_network
+  auralift_pma:
+    container_name: auralift_pma
+    image: phpmyadmin:5.2.1
+    ports:
+      - '8080:80'
+    environment:
+      PMA_HOST: auralift_mysql
+      UPLOAD_LIMIT: 1024M
+    depends_on:
+      - auralift_mysql
+    networks:
+      - auralift_network
+
+volumes:
+  auralift_mysql_data:
+  auralift_node_modules:
+networks:
+  auralift_network:
