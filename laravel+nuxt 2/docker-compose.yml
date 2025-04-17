@@ -1,0 +1,58 @@
+version: '3.2'
+services:
+  back:
+    container_name: back
+    image: back:latest
+    build:
+      dockerfile: docker/Dockerfile-back
+    volumes:
+      - ./back:/var/www/app/:rw
+      - ./docker/apache:/etc/apache2/sites-enabled/:ro
+      - ./docker/logs:/var/log/apache2/
+    ports:
+      - '80:80'
+    networks:
+      - network
+    depends_on:
+      - mysql
+  front:
+    container_name: front
+    image: front:latest
+    build:
+      dockerfile: docker/Dockerfile-front
+    volumes:
+      - ./front:/var/www/app/:rw
+    ports:
+      - '3000:3000'
+      - '3001:3001'
+    networks:
+      - network
+  mysql:
+    container_name: mysql
+    image: mysql:8.4.3
+    ports:
+      - '3306:3306'
+    env_file:
+      - back/.env
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/db:/docker-entrypoint-initdb.d
+    networks:
+      - network
+  pma:
+    container_name: pma
+    image: phpmyadmin:5.2.1
+    ports:
+      - '8080:80'
+    environment:
+      PMA_HOST: mysql
+      UPLOAD_LIMIT: 1024M
+    depends_on:
+      - mysql
+    networks:
+      - network
+
+volumes:
+  mysql_data:
+networks:
+  network:
